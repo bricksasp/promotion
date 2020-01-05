@@ -5,6 +5,7 @@ namespace bricksasp\promotion\controllers;
 use Yii;
 use bricksasp\promotion\models\Promotion;
 use bricksasp\promotion\models\PromotionCoupon;
+use bricksasp\promotion\models\PromotionConditions;
 
 class CouponController extends \bricksasp\base\BaseController
 {
@@ -31,17 +32,46 @@ class CouponController extends \bricksasp\base\BaseController
     {
         return [
             'index',
+            'goods',
         ];
     }
 
 	/**
-	 * 可直接领取使用
+	 * 可直接领取优惠券列表
 	 * 
 	 * @return array
+     * 
+     * @OA\Get(path="/promotion/coupon/index",
+     *   summary="优惠券列表",
+     *   tags={"promotion模块"},
+     *   @OA\Parameter(
+     *     description="登录凭证",
+     *     name="X-Token",
+     *     in="header",
+     *     @OA\Schema(
+     *       type="string"
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="相应结构",
+     *     @OA\MediaType(
+     *       mediaType="application/json",
+     *       @OA\Schema(ref="#/components/schemas/couponList"),
+     *     ),
+     *   ),
+     * )
+     *
 	 */
     public function actionIndex()
     {
-        return $this->render('index');
+        $data = Promotion::find()->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->all();
+        $data['userCoupon'] = (object)[];
+        if ($this->uid) {
+            $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
+            $data['userCoupon'] = array_column($userCoupon, 'promotion_id');
+        }
+        return $this->success($data);
     }
 
     /**
@@ -99,15 +129,91 @@ class CouponController extends \bricksasp\base\BaseController
      *     description="相应结构",
      *     @OA\MediaType(
      *       mediaType="application/json",
-     *       @OA\Schema(ref="#/components/schemas/response"),
+     *       @OA\Schema(ref="#/components/schemas/couponList"),
      *     ),
      *   ),
      * )
      *
+     * @OA\Schema(
+     *   schema="couponList",
+     *   description="列表结构",
+     *   allOf={
+     *     @OA\Schema(
+     *       @OA\Property(property="code", type="string", description="优惠券代码"),
+     *       @OA\Property(property="status", type="integer", description="使用状态'1正常2已使用"),
+     *       @OA\Property( property="start_time", type="integer", description="开始时间"),
+     *       @OA\Property( property="end_time", type="integer", description="结束时间" ),
+     *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
+     *       @OA\Property(property="content", type="string", description="type对应值"),
+     *     )
+     *   }
+     * )
      */
     public function actionUserCoupon()
     {
-        $data = PromotionCoupon::find()->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->userId])->all();
+        $data = PromotionCoupon::find()->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->all();
+        return $this->success($data);
+    }
+
+    /**
+     * @OA\Get(path="/promotion/coupon/goods",
+     *   summary="商品优惠券",
+     *   tags={"promotion模块"},
+     *   @OA\Parameter(
+     *     description="商品id",
+     *     name="id",
+     *     in="query",
+     *     required=true,
+     *     @OA\Schema(
+     *       type="integer"
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="相应结构",
+     *     @OA\MediaType(
+     *       mediaType="application/json",
+     *       @OA\Schema(ref="#/components/schemas/couponGoods"),
+     *     ),
+     *   ),
+     * )
+     *
+     *
+     * @OA\Schema(
+     *   schema="couponGoods",
+     *   description="列表结构",
+     *   allOf={
+     *     @OA\Schema(
+     *       @OA\Property(property="promotion_id", type="integer", description="促销id"),
+     *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
+     *       @OA\Property(property="content", type="string", description="type对应值"),
+     *       @OA\Property(property="promotion", type="array", description="促销信息", @OA\Items(
+     *           @OA\Property(
+     *               description="名称",
+     *               property="name",
+     *               type="integer"
+     *           ),
+     *           @OA\Property(
+     *               description="开始时间",
+     *               property="start_time",
+     *               type="integer"
+     *           ),
+     *           @OA\Property(
+     *               description="结束时间",
+     *               property="end_time",
+     *               type="integer"
+     *           ),
+     *         )
+     *       )
+     *     )
+     *   }
+     * )
+     */
+    public function actionGoods()
+    {
+        $goods_id = Yii::$app->request->get('id');
+        $data = PromotionConditions::find()->with(['promotion'])->where(['type'=>PromotionConditions::TYPE_PART, 'content' => $goods_id])->asArray()->all();
+
         return $this->success($data);
     }
 }

@@ -80,28 +80,4 @@ class IndexController extends \bricksasp\base\BaseController
         return $this->pageFormat($dataProvider);
     }
 
-    /**
-     * 优惠券列表
-     * @return array
-     * 
-     * @OA\Get(path="/promotion/index/coupon",
-     *   summary="优惠券列表",
-     *   tags={"promotion模块"},
-     *   @OA\Response(
-     *     response=200,
-     *     description="相应结构",
-     *     @OA\MediaType(
-     *       mediaType="application/json",
-     *       @OA\Schema(ref="#/components/schemas/response"),
-     *     ),
-     *   ),
-     * )
-     *
-     */
-    public function actionCoupon()
-    {
-        $model = new Promotion();
-        return $this->success($model->coupon());
-    }
-
 }

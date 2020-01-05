@@ -10,6 +10,12 @@ use Yii;
  */
 class PromotionConditions extends \bricksasp\base\BaseActiveRecord
 {
+    //1全部2分类3部分4订单满减
+    const TYPE_ALL = 1;
+    const TYPE_CAT = 2;
+    const TYPE_PART = 3;
+    const TYPE_REDUCTION = 4;
+
     /**
      * {@inheritdoc}
      */
@@ -39,5 +45,10 @@ class PromotionConditions extends \bricksasp\base\BaseActiveRecord
             'content' => 'Content',
             'type' => 'Type',
         ];
+    }
+    
+    public function getPromotion()
+    {
+        return $this->hasOne(Promotion::className(), ['id' => 'promotion_id'])->asArray();
     }
 }
