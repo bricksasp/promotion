@@ -78,6 +78,11 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
         ];
     }
 
+    public function getConditions()
+    {
+        return $this->hasMany(PromotionConditions::className(), ['promotion_id' => 'id'])->asArray();
+    }
+
     public function saveData($params)
     {
         extract($params);
@@ -137,11 +142,4 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
         return $model->save();
     }
 
-    /**
-     * 可以直接领取的优惠券
-     */
-    public function coupon()
-    {
-        echo "string";exit();
-    }
 }

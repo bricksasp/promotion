@@ -65,7 +65,7 @@ class CouponController extends \bricksasp\base\BaseController
 	 */
     public function actionIndex()
     {
-        $data = Promotion::find()->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->all();
+        $data = Promotion::find()->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->asArray()->all();
         $data['userCoupon'] = (object)[];
         if ($this->uid) {
             $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
@@ -145,6 +145,19 @@ class CouponController extends \bricksasp\base\BaseController
      *       @OA\Property( property="end_time", type="integer", description="结束时间" ),
      *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
      *       @OA\Property(property="content", type="string", description="type对应值"),
+     *       @OA\Property(property="conditions", type="array", description="促销规则", @OA\Items(
+     *           @OA\Property(
+     *               description="促销id",
+     *               property="promotion_id",
+     *               type="integer"
+     *           ),
+     *           @OA\Property(
+     *               description="优惠金额",
+     *               property="content",
+     *               type="integer"
+     *           )
+     *         )
+     *       ),
      *     )
      *   }
      * )
