@@ -33,6 +33,7 @@ class CouponController extends \bricksasp\base\BaseController
         return [
             'index',
             'goods',
+            'code',
         ];
     }
 
@@ -229,4 +230,43 @@ class CouponController extends \bricksasp\base\BaseController
 
         return $this->success($data);
     }
+
+    /**
+     * @OA\Get(path="/promotion/coupon/code",
+     *   summary="代码获取促销信息",
+     *   tags={"promotion模块"},
+     *   @OA\Parameter(
+     *     description="促销代码",
+     *     name="codes",
+     *     in="query",
+     *     required=true,
+     *     @OA\Schema(
+     *       type="string",
+     *       default="default_1,default_2,default_3,default_4"
+     *     )
+     *   ),
+     *   @OA\Response(
+     *     response=200,
+     *     description="相应结构",
+     *     @OA\MediaType(
+     *       mediaType="application/json",
+     *       @OA\Schema(ref="#/components/schemas/couponList"),
+     *     ),
+     *   ),
+     * )
+     *
+     */
+    public function actionCode()
+    {
+        $codes = array_filter(explode(',', Yii::$app->request->get('codes')));
+        $data = Promotion::find()->select(['id', 'name', 'type', 'code', 'start_time', 'end_time', 'exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'code' => $codes])->asArray()->all();
+        $data['userCoupon'] = (object)[];
+        if ($this->uid) {
+            $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
+            $data['userCoupon'] = array_column($userCoupon, 'promotion_id');
+        }
+        return $this->success($data);
+    }
+
+    
 }
