@@ -75,6 +75,7 @@ class CouponController extends \bricksasp\base\BaseController
      *       @OA\Property(property="exclusion", type="integer", description="排他'1是2否"),
      *       @OA\Property( property="start_at", type="integer", description="开始时间"),
      *       @OA\Property( property="end_at", type="integer", description="结束时间" ),
+     *       @OA\Property( property="receive_status", type="integer", description="领取状态" ),
      *       @OA\Property(property="conditions", type="object", description="促销条件",
      *           @OA\Property(
      *               description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价",
@@ -93,11 +94,14 @@ class CouponController extends \bricksasp\base\BaseController
 	 */
     public function actionIndex()
     {
-        $data = Promotion::find()->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->asArray()->all();
-        $data['userCoupon'] = (object)[];
+        $data = Promotion::find()->select(['id','name','code','start_at','end_at','exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->asArray()->all();
+        $userCoupon = [];
         if ($this->uid) {
             $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
-            $data['userCoupon'] = array_column($userCoupon, 'promotion_id');
+            $userCoupon = array_column($userCoupon, 'promotion_id');
+        }
+        foreach ($data as &$v) {
+            $v['receive_status'] = in_array($v['id'], $userCoupon) ? 1 : 0;
         }
         return $this->success($data);
     }
@@ -110,6 +114,7 @@ class CouponController extends \bricksasp\base\BaseController
      *     description="登录凭证",
      *     name="X-Token",
      *     in="header",
+     *     required=true,
      *     @OA\Schema(
      *       type="string"
      *     )
@@ -201,6 +206,14 @@ class CouponController extends \bricksasp\base\BaseController
      *   summary="商品优惠券",
      *   tags={"promotion模块"},
      *   @OA\Parameter(
+     *     description="登录凭证",
+     *     name="X-Token",
+     *     in="header",
+     *     @OA\Schema(
+     *       type="string"
+     *     )
+     *   ),
+     *   @OA\Parameter(
      *     description="商品id",
      *     name="id",
      *     in="query",
@@ -228,6 +241,7 @@ class CouponController extends \bricksasp\base\BaseController
      *       @OA\Property(property="promotion_id", type="integer", description="促销id"),
      *       @OA\Property( property="result_type", type="integer", description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价" ),
      *       @OA\Property(property="result", type="string", description="result_type对应值"),
+     *       @OA\Property( property="receive_status", type="integer", description="领取状态" ),
      *       @OA\Property(property="promotion", type="object", description="促销信息", 
      *           @OA\Property(
      *               description="名称",
@@ -258,6 +272,14 @@ class CouponController extends \bricksasp\base\BaseController
             ['and', ['condition_type'=>PromotionConditions::TYPE_PART], new Expression($goods_id . ' in (content)') ]
         ];
         $data = PromotionConditions::find()->select(['promotion_id','result_type','result'])->with(['promotion'])->where($map)->asArray()->all();
+        $userCoupon =[];
+        if ($this->uid) {
+            $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
+            $userCoupon = array_column($userCoupon, 'promotion_id');
+        }
+        foreach ($data as &$v) {
+            $v['receive_status'] = in_array($v['id'], $userCoupon) ? 1 : 0;
+        }
 
         return $this->success($data);
     }
