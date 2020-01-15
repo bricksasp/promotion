@@ -6,6 +6,20 @@ use Yii;
 
 /**
  * This is the model class for table "{{%promotion_coupon}}".
+ * 
+ *     condition_type:[
+ *       { value: 1, text: '全部商品' },
+ *       { value: 2, text: '商品分类' },
+ *       { value: 3, text: '指定商品' },
+ *       { value: 4, text: '订单满减' },
+ *     ],
+ *     result_type:[
+ *       { value: 1, text: '商品减固定金额' },
+ *       { value: 2, text: '商品折扣' },
+ *       { value: 3, text: '商品一口价' },
+ *       { value: 4, text: '订单减固定金额' },
+ *       { value: 5, text: '订单折扣' },
+ *       { value: 6, text: '订单一口价' },
  *
  */
 class PromotionCoupon extends \bricksasp\base\BaseActiveRecord

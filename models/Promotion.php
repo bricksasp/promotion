@@ -14,7 +14,7 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
     const TYPE_COUPON = 1;
     const TYPE_PROM = 2;
     const TYPE_GROUP = 3;
-    const TYPE_SECKILL = 1;
+    const TYPE_SECKILL = 4;
     /**
      * {@inheritdoc}
      */

@@ -6,6 +6,7 @@ use Yii;
 use bricksasp\promotion\models\Promotion;
 use bricksasp\promotion\models\PromotionCoupon;
 use bricksasp\promotion\models\PromotionConditions;
+use yii\db\Expression;
 
 class CouponController extends \bricksasp\base\BaseController
 {
@@ -58,11 +59,37 @@ class CouponController extends \bricksasp\base\BaseController
      *     description="相应结构",
      *     @OA\MediaType(
      *       mediaType="application/json",
-     *       @OA\Schema(ref="#/components/schemas/couponList"),
+     *       @OA\Schema(ref="#/components/schemas/promotionList"),
      *     ),
      *   ),
      * )
      *
+     * 
+     * @OA\Schema(
+     *   schema="promotionList",
+     *   description="列表结构",
+     *   allOf={
+     *     @OA\Schema(
+     *       @OA\Property(property="id", type="integer", description="促销id"),
+     *       @OA\Property(property="code", type="string", description="促销调用代码"),
+     *       @OA\Property(property="exclusion", type="integer", description="排他'1是2否"),
+     *       @OA\Property( property="start_at", type="integer", description="开始时间"),
+     *       @OA\Property( property="end_at", type="integer", description="结束时间" ),
+     *       @OA\Property(property="conditions", type="object", description="促销条件",
+     *           @OA\Property(
+     *               description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价",
+     *               property="result_type",
+     *               type="string"
+     *           ),
+     *           @OA\Property(
+     *               description="促销结果",
+     *               property="result",
+     *               type="string"
+     *           ),
+     *       ),
+     *     )
+     *   }
+     * )
 	 */
     public function actionIndex()
     {
@@ -199,9 +226,9 @@ class CouponController extends \bricksasp\base\BaseController
      *   allOf={
      *     @OA\Schema(
      *       @OA\Property(property="promotion_id", type="integer", description="促销id"),
-     *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
-     *       @OA\Property(property="content", type="string", description="type对应值"),
-     *       @OA\Property(property="promotion", type="array", description="促销信息", @OA\Items(
+     *       @OA\Property( property="result_type", type="integer", description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价" ),
+     *       @OA\Property(property="result", type="string", description="result_type对应值"),
+     *       @OA\Property(property="promotion", type="object", description="促销信息", 
      *           @OA\Property(
      *               description="名称",
      *               property="name",
@@ -217,7 +244,6 @@ class CouponController extends \bricksasp\base\BaseController
      *               property="end_at",
      *               type="integer"
      *           ),
-     *         )
      *       )
      *     )
      *   }
@@ -226,7 +252,12 @@ class CouponController extends \bricksasp\base\BaseController
     public function actionGoods()
     {
         $goods_id = Yii::$app->request->get('id');
-        $data = PromotionConditions::find()->with(['promotion'])->where(['type'=>PromotionConditions::TYPE_PART, 'content' => $goods_id])->asArray()->all();
+        $map = [
+            'or',
+            ['condition_type'=>PromotionConditions::TYPE_ALL],
+            ['and', ['condition_type'=>PromotionConditions::TYPE_PART], new Expression($goods_id . ' in (content)') ]
+        ];
+        $data = PromotionConditions::find()->select(['promotion_id','result_type','result'])->with(['promotion'])->where($map)->asArray()->all();
 
         return $this->success($data);
     }

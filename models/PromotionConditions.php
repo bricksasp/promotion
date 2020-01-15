@@ -10,7 +10,7 @@ use Yii;
  */
 class PromotionConditions extends \bricksasp\base\BaseActiveRecord
 {
-    //1全部2分类3部分4订单满减
+    //1全部商品2商品分类3部分商品4订单满减
     const TYPE_ALL = 1;
     const TYPE_CAT = 2;
     const TYPE_PART = 3;
