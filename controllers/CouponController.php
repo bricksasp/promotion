@@ -142,8 +142,8 @@ class CouponController extends \bricksasp\base\BaseController
      *     @OA\Schema(
      *       @OA\Property(property="code", type="string", description="优惠券代码"),
      *       @OA\Property(property="status", type="integer", description="使用状态'1正常2已使用"),
-     *       @OA\Property( property="start_time", type="integer", description="开始时间"),
-     *       @OA\Property( property="end_time", type="integer", description="结束时间" ),
+     *       @OA\Property( property="start_at", type="integer", description="开始时间"),
+     *       @OA\Property( property="end_at", type="integer", description="结束时间" ),
      *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
      *       @OA\Property(property="content", type="string", description="type对应值"),
      *       @OA\Property(property="conditions", type="array", description="促销规则", @OA\Items(
@@ -209,12 +209,12 @@ class CouponController extends \bricksasp\base\BaseController
      *           ),
      *           @OA\Property(
      *               description="开始时间",
-     *               property="start_time",
+     *               property="start_at",
      *               type="integer"
      *           ),
      *           @OA\Property(
      *               description="结束时间",
-     *               property="end_time",
+     *               property="end_at",
      *               type="integer"
      *           ),
      *         )
@@ -259,7 +259,7 @@ class CouponController extends \bricksasp\base\BaseController
     public function actionCode()
     {
         $codes = array_filter(explode(',', Yii::$app->request->get('codes')));
-        $data = Promotion::find()->select(['id', 'name', 'type', 'code', 'start_time', 'end_time', 'exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'code' => $codes])->asArray()->all();
+        $data = Promotion::find()->select(['id', 'name', 'type', 'code', 'start_at', 'end_at', 'exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'code' => $codes])->asArray()->all();
         $data['userCoupon'] = (object)[];
         if ($this->uid) {
             $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();

@@ -30,8 +30,8 @@ class PromotionConditions extends \bricksasp\base\BaseActiveRecord
     public function rules()
     {
         return [
-            [['promotion_id', 'type'], 'integer'],
-            [['content'], 'string', 'max' => 255],
+            [['promotion_id', 'condition_type', 'condition', 'result_type'], 'integer'],
+            [['content', 'result'], 'string', 'max' => 255],
         ];
     }
 

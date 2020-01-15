@@ -33,8 +33,8 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
             ],
             [
                 'class' => \yii\behaviors\TimestampBehavior::className(),
-                'createdAtAttribute' => 'start_time',
-                'updatedAtAttribute' => 'end_time',
+                'createdAtAttribute' => 'start_at',
+                'updatedAtAttribute' => 'end_at',
             ],
             [
                 'class' => \bricksasp\helpers\behaviors\UidBehavior::className(),
@@ -49,10 +49,11 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'num', 'scene', 'type', 'start_time', 'end_time', 'status', 'sort', 'exclusion', 'created_at', 'updated_at'], 'integer'],
+            [['user_id', 'num', 'scene', 'type', 'start_at', 'end_at', 'status', 'sort', 'exclusion', 'created_at', 'updated_at'], 'integer'],
             [['name'], 'string', 'max' => 64],
             [['code'], 'string', 'max' => 16],
-            [['receive_num', 'scene', 'type', 'sort', 'exclusion'], 'default', 'value' => 1]
+            [['receive_num', 'scene', 'type', 'sort', 'exclusion', 'status'], 'default', 'value' => 1],
+            [['code'], 'default', 'value' => Yii::$app->security->generateRandomString(6)]
         ];
     }
 
@@ -70,8 +71,8 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
             'scene' => 'Scene',
             'type' => 'Type',
             'code' => 'Code',
-            'start_time' => 'Start Time',
-            'end_time' => 'End Time',
+            'start_at' => 'Start Time',
+            'end_at' => 'End Time',
             'status' => 'Status',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
@@ -80,31 +81,26 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
 
     public function getConditions()
     {
-        return $this->hasMany(PromotionConditions::className(), ['promotion_id' => 'id'])->asArray();
+        return $this->hasOne(PromotionConditions::className(), ['promotion_id' => 'id'])->asArray();
     }
 
     public function saveData($params)
     {
-        extract($params);
         $this->load($params);
 
         $transaction = self::getDb()->beginTransaction();
         try {
-            $this->save();
-            if (!$this->id) {
+            if (!$this->save()) {
                 $transaction->rollBack();
                 return false;
             }
-
-            $conditions = [];
-            foreach ($conditionItems as $k => $v) {
-                $row['promotion_id'] = $this->id;
-                $conditions[] = $row;
+            $params['conditions']['promotion_id'] = $this->id;
+            $condition = new PromotionConditions();
+            $condition->load($params['conditions']);
+            if (!$condition->save()) {
+                $transaction->rollBack();
+                Tools::exceptionBreak('条件保存失败');
             }
-
-            self::getDb()->createCommand()
-            ->batchInsert(PromotionConditions::tableName(),['promotion_id','type','content'],$conditions)
-            ->execute();
 
             $transaction->commit();
             return true;
@@ -115,6 +111,38 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
             $transaction->rollBack();
             throw $e;
         }
+        return false;
+    }
+
+    public function updateData($params)
+    {
+        
+        $this->load($params);
+
+        $transaction = self::getDb()->beginTransaction();
+        try {
+            if (!$this->save()) {
+                $transaction->rollBack();
+                return false;
+            }
+            $params['conditions']['promotion_id'] = $this->id;
+            $condition = new PromotionConditions();
+            $condition->load($params['conditions']);
+            if (!$condition->save()) {
+                $transaction->rollBack();
+                Tools::exceptionBreak('条件保存失败');
+            }
+
+            $transaction->commit();
+            return true;
+        } catch(\Exception $e) {
+            $transaction->rollBack();
+            throw $e;
+        } catch(\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
+        return false;
     }
 
     /**
@@ -135,8 +163,8 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
         $c = PromotionConditions::find()->where(['promotion_id' => $promotion_id])->one();
         $params['type'] = $c->type;
         $params['content'] = $c->content;
-        $params['start_time'] = $promotion->start_time;
-        $params['end_time'] = $promotion->end_time;
+        $params['start_at'] = $promotion->start_at;
+        $params['end_at'] = $promotion->end_at;
         $model = new PromotionCoupon();
         $model->load($params);
         return $model->save();

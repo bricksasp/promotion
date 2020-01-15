@@ -39,7 +39,7 @@ class PromotionCoupon extends \bricksasp\base\BaseActiveRecord
     public function rules()
     {
         return [
-            [['owner_id', 'promotion_id', 'user_id', 'status', 'type', 'content', 'start_time', 'end_time', 'created_at', 'updated_at'], 'integer'],
+            [['owner_id', 'promotion_id', 'user_id', 'status', 'type', 'content', 'start_at', 'end_at', 'created_at', 'updated_at'], 'integer'],
             [['code'], 'string', 'max' => 8],
             [['status'], 'default', 'value' => 1],
             [['code'], 'default', 'value' => Yii::$app->security->generateRandomString(6)]

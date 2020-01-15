@@ -15,17 +15,26 @@ use yii\filters\VerbFilter;
 class PromotionController extends BaseController
 {
     /**
-     * {@inheritdoc}
+     * 登录可访问 其他需授权
+     * @return array
      */
-    public function behaviors()
+    public function allowAction()
     {
         return [
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
-                ],
-            ],
+            'create',
+            'update',
+            'delete',
+        ];
+    }
+
+    /**
+     * 免登录可访问
+     * @return array
+     */
+    public function allowNoLoginAction()
+    {
+        return [
+            'index',
         ];
     }
 
@@ -77,8 +86,8 @@ class PromotionController extends BaseController
      *     @OA\Schema(
      *       @OA\Property(property="id", type="integer", description="促销id"),
      *       @OA\Property(property="name", type="string", description="促销名称"),
-     *       @OA\Property( property="start_time", type="integer", description="开始时间"),
-     *       @OA\Property( property="end_time", type="integer", description="结束时间" ),
+     *       @OA\Property( property="start_at", type="integer", description="开始时间"),
+     *       @OA\Property( property="end_at", type="integer", description="结束时间" ),
      *       @OA\Property( property="status", type="string", description="1默认2可直接领取" ),
      *     )
      *   }
@@ -124,13 +133,11 @@ class PromotionController extends BaseController
     {
         $model = new Promotion();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->saveData(Yii::$app->request->post())) {
+            return $this->success();
         }
 
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->fail($model->errors);
     }
 
     /**
@@ -140,17 +147,15 @@ class PromotionController extends BaseController
      * @return mixed
      * @throws HttpException if the model cannot be found
      */
-    public function actionUpdate($id)
+    public function actionUpdate()
     {
-        $model = $this->findModel($id);
+        $model = new Promotion();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->updateData(Yii::$app->request->post())) {
+            return $this->success();
         }
 
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->fail($model->errors);
     }
 
     /**
@@ -164,7 +169,7 @@ class PromotionController extends BaseController
     {
         $this->findModel($id)->delete();
 
-        return $this->redirect(['index']);
+        return $this->success();
     }
 
     /**
