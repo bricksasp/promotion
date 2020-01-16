@@ -4,6 +4,7 @@ namespace bricksasp\promotion\controllers;
 
 use Yii;
 use bricksasp\promotion\models\Promotion;
+use bricksasp\promotion\models\PromotionConditions;
 use yii\data\ActiveDataProvider;
 use bricksasp\base\BaseController;
 use yii\web\HttpException;
@@ -41,8 +42,12 @@ class PromotionController extends BaseController
     public function actionIndex()
     {
         $params = Yii::$app->request->queryParams;
+        $map = [];
+        if (isset($params['type'])) {
+            $map['type'] = $params['type'];
+        }
         $dataProvider = new ActiveDataProvider([
-            'query' => Promotion::find($this->dataOwnerUid())->where(['type' => $params['type'] ?? 1]),
+            'query' => Promotion::find($this->dataOwnerUid())->where($map),
             'pagination' => [
                 'pageSize' => $params['pageSize'] ?? 10,
             ],
@@ -65,7 +70,7 @@ class PromotionController extends BaseController
     {
         $model = $this->findModel(Yii::$app->request->get('id'));
         $data = $model->toArray();;
-        $data['conditions'] = $model->conditions;
+        $data['conditions'] = $model->conditions ?? (object)[];
         return $this->success($data);
     }
 
@@ -94,9 +99,10 @@ class PromotionController extends BaseController
      */
     public function actionUpdate()
     {
-        $model = new Promotion();
+        $params = Yii::$app->request->post();
+        $model = $this->findModel($params['id']);
 
-        if ($model->updateData(Yii::$app->request->post())) {
+        if ($model->updateData($params)) {
             return $this->success();
         }
 
@@ -110,10 +116,11 @@ class PromotionController extends BaseController
      * @return mixed
      * @throws HttpException if the model cannot be found
      */
-    public function actionDelete($id)
+    public function actionDelete()
     {
-        $this->findModel($id)->delete();
-
+        $id = Yii::$app->request->get('id');
+        Promotion::deleteAll(['id'=>$id]);
+        PromotionConditions::deleteAll(['promotion_id'=> $id]);
         return $this->success();
     }
 

@@ -32,11 +32,6 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
                 'updatedAtAttribute' => 'updated_at',
             ],
             [
-                'class' => \yii\behaviors\TimestampBehavior::className(),
-                'createdAtAttribute' => 'start_at',
-                'updatedAtAttribute' => 'end_at',
-            ],
-            [
                 'class' => \bricksasp\helpers\behaviors\UidBehavior::className(),
                 'createdAtAttribute' => 'user_id',
             ],
@@ -86,6 +81,13 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
 
     public function saveData($params)
     {
+        if (!empty($params['start_at'])) {
+            $params['start_at'] = $params['start_at'] / 1000;
+        }
+        if (!empty($params['end_at'])) {
+            $params['end_at'] = $params['end_at'] / 1000;
+        }
+
         $this->load($params);
 
         $transaction = self::getDb()->beginTransaction();
@@ -116,7 +118,13 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
 
     public function updateData($params)
     {
-        
+        if (!empty($params['start_at'])) {
+            $params['start_at'] = $params['start_at'] / 1000;
+        }
+        if (!empty($params['end_at'])) {
+            $params['end_at'] = $params['end_at'] / 1000;
+        }
+
         $this->load($params);
 
         $transaction = self::getDb()->beginTransaction();
@@ -125,6 +133,7 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
                 $transaction->rollBack();
                 return false;
             }
+            PromotionConditions::deleteAll(['promotion_id'=>$this->id]);
             $params['conditions']['promotion_id'] = $this->id;
             $condition = new PromotionConditions();
             $condition->load($params['conditions']);
@@ -161,7 +170,7 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
         }
 
         $c = PromotionConditions::find()->where(['promotion_id' => $promotion_id])->one();
-        $params['type'] = $c->type;
+        $params['type'] = $c->condition_type;
         $params['content'] = $c->content;
         $params['start_at'] = $promotion->start_at;
         $params['end_at'] = $promotion->end_at;
