@@ -133,7 +133,9 @@ class CouponController extends \bricksasp\base\BaseController
      *     description="相应结构",
      *     @OA\MediaType(
      *       mediaType="application/json",
-     *       @OA\Schema(ref="#/components/schemas/response"),
+     *       @OA\Schema(
+     *           @OA\Property( property="id", type="integer", description="优惠券id" ),
+     *       ),
      *     ),
      *   ),
      * )
@@ -142,7 +144,8 @@ class CouponController extends \bricksasp\base\BaseController
     public function actionReceive()
     {
         $model = new Promotion();
-        return $model->receiveCoupon($this->queryFilters()) ? $this->success() : $this->fail();
+        $coupon = $model->receiveCoupon($this->queryFilters());
+        return $coupon ? $this->success(['id' => $coupon->id]) : $this->fail();
     }
 
     /**
@@ -172,32 +175,21 @@ class CouponController extends \bricksasp\base\BaseController
      *   description="列表结构",
      *   allOf={
      *     @OA\Schema(
+     *       @OA\Property( property="id", type="integer", description="优惠券id" ),
      *       @OA\Property(property="code", type="string", description="优惠券代码"),
      *       @OA\Property(property="status", type="integer", description="使用状态'1正常2已使用"),
      *       @OA\Property( property="start_at", type="integer", description="开始时间"),
      *       @OA\Property( property="end_at", type="integer", description="结束时间" ),
-     *       @OA\Property( property="type", type="integer", description="1全部2分类3部分商品4订单满减" ),
+     *       @OA\Property( property="type", type="integer", description="类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价" ),
      *       @OA\Property(property="content", type="string", description="type对应值"),
-     *       @OA\Property(property="conditions", type="array", description="促销规则", @OA\Items(
-     *           @OA\Property(
-     *               description="促销id",
-     *               property="promotion_id",
-     *               type="integer"
-     *           ),
-     *           @OA\Property(
-     *               description="优惠金额",
-     *               property="content",
-     *               type="integer"
-     *           )
-     *         )
-     *       ),
+     *       @OA\Property(property="exclusion", type="integer", description="是否可同时使用 2是"),
      *     )
      *   }
      * )
      */
     public function actionUserCoupon()
     {
-        $data = PromotionCoupon::find()->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->all();
+        $data = PromotionCoupon::find()->select(['id', 'code', 'status', 'start_at', 'end_at'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->all();
         return $this->success($data);
     }
 

@@ -169,14 +169,15 @@ class Promotion extends \bricksasp\base\BaseActiveRecord
             Tools::exceptionBreak(990001);
         }
 
-        $c = PromotionConditions::find()->where(['promotion_id' => $promotion_id])->one();
-        $params['type'] = $c->condition_type;
-        $params['content'] = $c->content;
-        $params['start_at'] = $promotion->start_at;
-        $params['end_at'] = $promotion->end_at;
+        $conditions = PromotionConditions::find()->where(['promotion_id' => $promotion_id])->one();
+        $params['type']      = $conditions->result_type;
+        $params['content']   = $conditions->result;
+        $params['start_at']  = $promotion->start_at;
+        $params['end_at']    = $promotion->end_at;
+        $params['exclusion'] = $promotion->exclusion;
         $model = new PromotionCoupon();
         $model->load($params);
-        return $model->save();
+        return $model->save() ? $model : false;
     }
 
 }
