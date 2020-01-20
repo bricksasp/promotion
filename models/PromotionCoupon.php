@@ -107,7 +107,7 @@ class PromotionCoupon extends \bricksasp\base\BaseActiveRecord
             Tools::exceptionBreak(Yii::t('base', 40002, '优惠券'));
         }
         $cps = [];
-        foreach ($coupons as $item) {
+        foreach ($coupons as $k => $item) {
             if ($item->start_at > time()) {
                 Tools::exceptionBreak(990002);
             }
@@ -120,8 +120,12 @@ class PromotionCoupon extends \bricksasp\base\BaseActiveRecord
             if (count($ids) > 1 && $item->exclusion == self::EXCLUSION_YES) {
                 Tools::exceptionBreak(990005);
             }
-            $cps['conditions'][$item->conditions->condition_type][] = $item->conditions->content;
-            $cps['result'][$item->type][] = $item->content;
+            $cps[$item->conditions->condition_type]['content'][] = $item->conditions->content;
+            if ($item->type == self::RESULT_GOODS_PRICE) {
+                $cps[$item->conditions->condition_type]['result'][$item->type][$item->conditions->content] = $item->content;
+            }else{
+                $cps[$item->conditions->condition_type]['result'][$item->type][] = $item->content;
+            }
         }
         return $cps;
     }
