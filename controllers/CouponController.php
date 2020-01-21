@@ -305,10 +305,14 @@ class CouponController extends \bricksasp\base\BaseController
     {
         $codes = array_filter(explode(',', Yii::$app->request->get('codes')));
         $data = Promotion::find()->select(['id', 'name', 'type', 'code', 'start_at', 'end_at', 'exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'code' => $codes])->asArray()->all();
-        $data['userCoupon'] = (object)[];
+
+        $userCoupon =[];
         if ($this->uid) {
             $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
-            $data['userCoupon'] = array_column($userCoupon, 'promotion_id');
+            $userCoupon = array_column($userCoupon, 'promotion_id');
+        }
+        foreach ($data as &$v) {
+            $v['receive_status'] = in_array($v['id'], $userCoupon) ? 1 : 0;
         }
         return $this->success($data);
     }
