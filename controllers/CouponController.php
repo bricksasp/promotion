@@ -233,7 +233,7 @@ class CouponController extends \bricksasp\base\BaseController
      *       @OA\Property(property="promotion_id", type="integer", description="促销id"),
      *       @OA\Property( property="result_type", type="integer", description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价" ),
      *       @OA\Property(property="result", type="string", description="result_type对应值"),
-     *       @OA\Property( property="receive_status", type="integer", description="领取状态" ),
+     *       @OA\Property( property="receive_status", type="integer", description="领取状态 0未领取1已领取" ),
      *       @OA\Property(property="promotion", type="object", description="促销信息", 
      *           @OA\Property(
      *               description="名称",
@@ -270,7 +270,7 @@ class CouponController extends \bricksasp\base\BaseController
             $userCoupon = array_column($userCoupon, 'promotion_id');
         }
         foreach ($data as &$v) {
-            $v['receive_status'] = in_array($v['id'], $userCoupon) ? 1 : 0;
+            $v['receive_status'] = in_array($v['id'], $userCoupon) ? '1' : '0';
         }
 
         return $this->success($data);
