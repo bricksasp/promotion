@@ -97,7 +97,7 @@ class PromotionCoupon extends \bricksasp\base\BaseActiveRecord
 
     public function getConditions()
     {
-        return $this->hasOne(PromotionConditions::className(), ['promotion_id' => 'promotion_id']);
+        return $this->hasOne(PromotionConditions::className(), ['promotion_id' => 'promotion_id'])->asArray();
     }
 
     public function checkEffectiveness($ids=[])

@@ -189,7 +189,7 @@ class CouponController extends \bricksasp\base\BaseController
      */
     public function actionUserCoupon()
     {
-        $data = PromotionCoupon::find()->select(['id', 'code', 'status', 'start_at', 'end_at'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->all();
+        $data = PromotionCoupon::find()->with(['promotion', 'conditions'])->select(['promotion_id', 'id', 'code', 'status', 'start_at', 'end_at'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
         return $this->success($data);
     }
 
