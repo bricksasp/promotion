@@ -270,9 +270,8 @@ class CouponController extends \bricksasp\base\BaseController
             $userCoupon = array_column($userCoupon, 'promotion_id');
         }
         foreach ($data as &$v) {
-            $v['receive_status'] = in_array($v['id'], $userCoupon) ? '1' : '0';
+            $v['receive_status'] = in_array($v['promotion_id'], $userCoupon) ? '1' : '0';
         }
-
         return $this->success($data);
     }
 
