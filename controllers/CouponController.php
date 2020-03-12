@@ -94,7 +94,12 @@ class CouponController extends \bricksasp\base\BaseController
 	 */
     public function actionIndex()
     {
-        $data = Promotion::find()->select(['id','name','code','start_at','end_at','exclusion'])->with(['conditions'])->where(['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2])->asArray()->all();
+        $map = [
+            'and',
+            ['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2],
+            ['and', ['>=', 'end_at', time()], ['<=', 'start_at', time()] ]
+        ];
+        $data = Promotion::find()->select(['id','name','code','start_at','end_at','exclusion'])->with(['conditions'])->where($map)->asArray()->all();
         $userCoupon = [];
         if ($this->uid) {
             $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
@@ -230,10 +235,12 @@ class CouponController extends \bricksasp\base\BaseController
      *   description="列表结构",
      *   allOf={
      *     @OA\Schema(
+     *       @OA\Property(property="id", type="integer", description="优惠券id"),
      *       @OA\Property(property="promotion_id", type="integer", description="促销id"),
      *       @OA\Property( property="result_type", type="integer", description="促销结果类型：1商品减固定金额2商品折扣3商品一口价4订单减固定金额5订单折扣6订单一口价" ),
      *       @OA\Property(property="result", type="string", description="result_type对应值"),
      *       @OA\Property( property="receive_status", type="integer", description="领取状态 0未领取1已领取" ),
+     *       @OA\Property( property="coupon_id", type="integer", description="已领券id，未领取为0" ),
      *       @OA\Property(property="promotion", type="object", description="促销信息", 
      *           @OA\Property(
      *               description="名称",
@@ -258,21 +265,38 @@ class CouponController extends \bricksasp\base\BaseController
     public function actionGoods()
     {
         $goods_id = Yii::$app->request->get('id');
+
         $map = [
-            'or',
-            ['condition_type'=>PromotionConditions::TYPE_ALL],
-            ['and', ['condition_type'=>PromotionConditions::TYPE_PART], new Expression($goods_id . ' in (content)') ]
+            'and',
+            ['user_id'=>$this->ownerId, 'type' => Promotion::TYPE_COUPON, 'status' => 2],
+            ['and', ['>=', 'end_at', time()], ['<=', 'start_at', time()] ]
         ];
-        $data = PromotionConditions::find()->select(['promotion_id','result_type','result'])->with(['promotion'])->where($map)->asArray()->all();
-        $userCoupon =[];
+        $promotions = Promotion::find()->select(['id'])->with(['conditions'])->where($map)->asArray()->all();
+
+        if (empty($promotions)) {
+            return $this->success([]);
+        }
+
+        $map = [
+            'and',
+            ['promotion_id' => array_column($promotions,'id')],
+            [
+                'or',
+                ['condition_type'=>PromotionConditions::TYPE_ALL],
+                ['and', ['condition_type'=>PromotionConditions::TYPE_PART], new Expression($goods_id . ' in (content)') ]
+            ]
+        ];
+        $res = PromotionConditions::find()->select(['promotion_id','result_type','result'])->with(['promotion'])->where($map)->asArray()->all();
+        $userCoupon = [];
         if ($this->uid) {
-            $userCoupon = PromotionCoupon::find()->select(['promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
-            $userCoupon = array_column($userCoupon, 'promotion_id');
+            $userCoupon = PromotionCoupon::find()->select(['id', 'promotion_id'])->where(['owner_id'=>$this->ownerId, 'user_id'=>$this->uid])->asArray()->all();
+            $userCoupon = array_column($userCoupon,'id','promotion_id');
         }
-        foreach ($data as &$v) {
-            $v['receive_status'] = in_array($v['promotion_id'], $userCoupon) ? '1' : '0';
+        foreach ($res as &$v) {
+            $v['receive_status'] = array_key_exists($v['promotion_id'], $userCoupon) ? '1' : '0';
+            $v['coupon_id'] = $v['receive_status'] ? $userCoupon[$v['promotion_id']] : '0';
         }
-        return $this->success($data);
+        return $this->success($res);
     }
 
     /**
