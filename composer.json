@@ -1,0 +1,24 @@
+{
+    "name": "bricksasp/promotion",
+    "description": "bricksasp promotion",
+    "keywords": ["yii2", "promotion"],
+    "type": "yii2-extension",
+    "support": {
+        "issues": "https://github.com/bricksasp/promotion/issues",
+        "source": "https://github.com/bricksasp/promotion"
+    },
+    "authors": [
+        {
+            "name": "bricksasp",
+            "email": "649909457@qq.com"
+        }
+    ],
+    "require": {
+        "bricksasp/base": "~1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "bricksasp\\promotion\\": ""
+        }
+    }
+}
